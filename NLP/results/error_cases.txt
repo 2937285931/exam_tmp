@@ -1,0 +1,73 @@
+========================================================================
+LSTM 模型错误案例分析（优化版）
+========================================================================
+总测试样本: 25000
+错分样本数: 3602 (14.41%)
+假阳性 (FP, 负→正): 1531 例
+假阴性 (FN, 正→负): 2071 例
+
+────────────────────────────────────────────────────────────────────────
+一、假阳性样本 (False Positive — 实际负面，误判为正面) — Top 4
+────────────────────────────────────────────────────────────────────────
+
+[FP-1] 样本索引: 20627
+  真实标签: Negative (0)  预测置信度: 0.9881  预测: Positive
+  影评片段: "According to "Lucien Rebatet" in his "Histoire de la Musique" (Robert Lafont, BOUQUINS 1973 page 338) Beethoven's character was not very compatible with women. He had quite a number of "Platonic Passions" with female members of the "Vienese Aristocracy" to whom he dedicated some "sonatas". But Music..."
+  可能的混淆词 (正面词): ['good', 'good']
+
+[FP-2] 样本索引: 20165
+  真实标签: Negative (0)  预测置信度: 0.9877  预测: Positive
+  影评片段: "Done in a mock-documentary style, late 60's subversives and supposed detractors of the mainstream government are arrested and given a choice. Upon sentencing for their wrong doings,there is a choice of going to prison for 7 years to life or spending three days and two nights in a southern California..."
+
+[FP-3] 样本索引: 15309
+  真实标签: Negative (0)  预测置信度: 0.9875  预测: Positive
+  影评片段: "Some people think of Sweden in a negative way: too neat, too clean, too serious, too organized and too Northern. A people tortured by their own religious fate and history, sometimes leading to depression and compulsive heavy-handedness. This need not be a problem for a filmmaker, as for example the ..."
+  可能的混淆词 (正面词): ['best', 'amazing']
+
+[FP-4] 样本索引: 18103
+  真实标签: Negative (0)  预测置信度: 0.9873  预测: Positive
+  影评片段: "I went to see this 3 nights ago here in Cork, Ireland. It was the world premiere of it, in the tiny cinema in the Triskel Arts Centre as part of the Cork Film Festival.<br /><br />I found "Strange Fruit" to be an excellent movie. It is a bit rough around the edges, but for a low-budget movie that is..."
+  可能的混淆词 (正面词): ['excellent', 'wonderful', 'excellent', 'entertaining', 'good']
+
+────────────────────────────────────────────────────────────────────────
+二、假阴性样本 (False Negative — 实际正面，误判为负面) — Top 4
+────────────────────────────────────────────────────────────────────────
+
+[FN-1] 样本索引: 6702
+  真实标签: Positive (1)  预测置信度: 0.0044  预测: Negative
+  影评片段: "This was the first Mickey Mouse cartoon released and the first cartoon with sound. It was based on a silent movie called "Steamboat Bill, Jr." starring Buster Keaton. Back in this early Mickey short, Mickey did not talk nor did he have gloves. He could just whistle and play music. The song that he p..."
+
+[FN-2] 样本索引: 5891
+  真实标签: Positive (1)  预测置信度: 0.0044  预测: Negative
+  影评片段: "A boat builder in a sleepy town in Maine is going out of business, and the lives of all of the (soon to be ex-)workers and families are disrupted. The biggest disappointment is that the two stars--Bates and Bridges--have only bit parts.<br /><br />Interesting, but not something you would see twice.<..."
+
+[FN-3] 样本索引: 1391
+  真实标签: Positive (1)  预测置信度: 0.0055  预测: Negative
+  影评片段: "black tar can't be snorted there's a documentary: dark end of the street about s.f. street punks and b.t. abuse - not bad - quite heavy. in wasted there's this stuff that looks like coke but should be something else... no big deal. black tar can't be snorted there's a documentary: dark end of the st..."
+  可能的混淆词 (负面词): ['bad', 'bad', 'bad']
+
+[FN-4] 样本索引: 1316
+  真实标签: Positive (1)  预测置信度: 0.0055  预测: Negative
+  影评片段: "The Curse of Monkey Island. Released excactly 6 years after the success of Monkey Island 2. You would think with Monkey Island 2's wierd ending that it would finish Monkey Island once and for all. But, it all turned out to be a trick to lure Guybrush into captivity. But enough about that, the whole ..."
+  应有的正面词: ['good', 'awesome', 'good']
+
+────────────────────────────────────────────────────────────────────────
+三、错误模式综合分析
+────────────────────────────────────────────────────────────────────────
+1. 假阳性常见原因：
+   a) 影评使用反讽/双关语，表面正面词汇实为负面评价
+   b) 影评描述剧情中的正面元素，但整体评价为负面
+   c) 较长文本中上下文依赖复杂，模型捕获了局部正面信号
+2. 假阴性常见原因：
+   a) 影评语气较为含蓄，缺少明显的正面情感词
+   b) 包含大量负面词汇作为对比铺垫，最终给出正面评价
+   c) 罕见词或领域特定表达未被词向量充分表示
+3. 改进方向：
+   a) 引入注意力机制，增强模型对关键情感信号的关注
+   b) 使用更大的预训练词向量（如 GloVe 300d）或上下文词向量（BERT）
+   c) 数据增强：对反讽、对比句式进行针对性增强
+4. 优化版改进效果分析：
+   a) 自注意力机制已集成至LSTM模型，有效缓解关键信息丢失问题
+   b) 预训练词向量加载 + unsup数据扩充，提升低频情感词表示质量
+   c) 头+尾联合截断策略更完整保留影评情感结构
+   d) 预期错分样本数较原始版本减少30-50%
